@@ -2,5 +2,8 @@
     <!-- Base application theme. -->
     <style name="Theme.presente" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
+        <item name="android:statusBarColor">#141414</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">#141414</item>
     </style>
 </resources>
