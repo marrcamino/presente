@@ -1,10 +1,10 @@
 <script lang="ts">
   import { formatDate } from "$lib/utils";
   import { ExternalLink } from "@lucide/svelte";
-  import { getOfficeContext } from "../../routes/offices/context.svelte";
+  import { getAllOfficeContext } from "../../routes/offices/context.svelte";
   import { tick } from "svelte";
 
-  let context = getOfficeContext();
+  let context = getAllOfficeContext();
 </script>
 
 <div class="overflow-x-auto rounded-lg border mt-2">
@@ -27,9 +27,9 @@
         </tr>
       {:else}
         {#each context.offices as office (office.id)}
-          <tr class="border-t">
+          <tr class="border-t active:opacity-50 transition-colors">
             <td class="px-4 py-3">
-              <a href="/offices/{office.id}" class="flex">
+              <a href="/offices/{office.id}" class="flex ">
                 <div class="w-full">
                   <div class="font-bold">
                     {office.abbr}

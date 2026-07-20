@@ -1,19 +1,19 @@
 <script lang="ts">
   import AddEditOfficeDialog from "$lib/components/add-edit-office-dialog.svelte";
   import DeleteOfficeDialog from "$lib/components/delete-office-dialog.svelte";
-  
+
   import Header from "$lib/components/header.svelte";
   import OfficesTable from "$lib/components/offices-table.svelte";
   import { Plus } from "@lucide/svelte";
   import { onMount } from "svelte";
-  import { setOfficeContext } from "./context.svelte";
+  import { setAllOfficeContext } from "./context.svelte";
 
-  let context = setOfficeContext();
+  let context = setAllOfficeContext();
   onMount(async () => await context.loadOffices());
 </script>
 
 <AddEditOfficeDialog bind:open={context.openEditDialog} />
-<DeleteOfficeDialog bind:open={context.deleteDialog}/>
+<DeleteOfficeDialog bind:open={context.deleteDialog} />
 
 <Header>
   <div>List of Offices</div>

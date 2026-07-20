@@ -1,9 +1,9 @@
 import { getContext, setContext } from "svelte";
 import { getDb } from "$lib/db";
 
-const CONTEXT_KEY = Symbol("app-context");
+const CONTEXT_KEY = Symbol("all-office-context");
 
-class OfficeContext {
+class AllOfficeContext {
   openEditDialog = $state(false)
   deleteDialog = $state(false)
   openOffice: Office | null = $state(null)
@@ -31,10 +31,10 @@ class OfficeContext {
   }
 }
 
-export function setOfficeContext() {
-  return setContext(CONTEXT_KEY, new OfficeContext)
+export function setAllOfficeContext() {
+  return setContext(CONTEXT_KEY, new AllOfficeContext)
 }
 
-export function getOfficeContext() {
-  return getContext(CONTEXT_KEY) as OfficeContext
+export function getAllOfficeContext() {
+  return getContext(CONTEXT_KEY) as AllOfficeContext
 }

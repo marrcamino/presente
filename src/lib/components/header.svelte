@@ -33,9 +33,7 @@
         <ArrowLeft size={22} />
       </button>
 
-      <div>
-        {@render children()}
-      </div>
+      {@render children()}
     {:else}
       {@render children()}
     {/if}

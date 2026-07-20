@@ -1,12 +1,13 @@
 <script lang="ts">
   import { getDb } from "$lib/db";
   import { slide } from "svelte/transition";
-  import { getOfficeContext } from "../../routes/offices/context.svelte";
+  import { getAllOfficeContext } from "../../routes/offices/context.svelte";
   import { tick, untrack } from "svelte";
 
   let { open = $bindable(false) }: { open: boolean } = $props();
 
-  const context = getOfficeContext();
+  const context = getAllOfficeContext();
+
   let dialogEl: HTMLDialogElement;
   let name = $state("");
   let abbr = $state("");

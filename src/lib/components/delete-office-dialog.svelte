@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getDb } from "$lib/db";
-  import { getOfficeContext } from "../../routes/offices/context.svelte";
+  import { getAllOfficeContext } from "../../routes/offices/context.svelte";
 
   let {
     open = $bindable(false),
@@ -8,7 +8,7 @@
     open: boolean;
   } = $props();
 
-  const context = getOfficeContext();
+  const context = getAllOfficeContext();
   let dialogEl: HTMLDialogElement;
   let loading = $state(false);
   let error = $state("");
