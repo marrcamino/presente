@@ -3,6 +3,7 @@
   import { getDb } from "$lib/db";
   import { resolvePhotoSrc } from "$lib/photo";
   import { cleanupOrphanedPhotos } from "$lib/photo-cleanup";
+  import { dialogClickedOutside } from "$lib/utils";
   import { Camera } from "@lucide/svelte";
   import {
     BaseDirectory,
@@ -221,11 +222,10 @@
 <dialog
   bind:this={dialogEl}
   class="w-full max-w-sm rounded-b-xl pt-safe p-4 text-foreground backdrop:bg-black/50"
+  {@attach dialogClickedOutside(() => ctx.closeEmployeeDialog())}
 >
   <form onsubmit={handleSubmit} class="flex flex-col gap-3">
-    <h2
-      class="text-lg font-semibold mt-2"
-    >
+    <h2 class="text-lg font-semibold mt-2">
       {isEditing ? "Edit Employee" : "Add Employee"}
     </h2>
 

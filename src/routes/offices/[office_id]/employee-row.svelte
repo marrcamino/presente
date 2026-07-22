@@ -26,7 +26,7 @@
 <button
   type="button"
   onclick={openDialog}
-  class="flex w-full items-center gap-3 rounded-md border border-border bg-card p-3 text-left transition-colors hover:bg-accent"
+  class="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-3 text-left transition-colors hover:bg-accent"
 >
   <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-muted">
     {#if photoSrc}

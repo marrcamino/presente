@@ -20,12 +20,14 @@ class OfficeContext {
     );
   }
 
-  closeEmployeeDialog(){
+  closeEmployeeDialog() {
     this.showEmployeeDialog = false
   }
 
   addEmployee(employee: Employee) {
-    this.employees = [employee, ...(this.employees ?? [])]
+    this.employees = [employee, ...(this.employees ?? [])].sort((a, b) =>
+      a.name.localeCompare(b.name)
+    )
   }
 
   updateEmployee(employee: Employee) {

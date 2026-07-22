@@ -1,3 +1,10 @@
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 /**
  * Formats a date (Date object or ISO string) into a readable string.
  *
@@ -29,4 +36,29 @@ export function formatDate(
         : { month: "long", day: "numeric", year: "numeric" };
 
   return new Intl.DateTimeFormat("en-US", formatOptions).format(date);
+}
+
+
+// clickOutside.ts
+export function dialogClickedOutside(onOutside: () => void) {
+  return (node: HTMLDialogElement) => {
+    function handleClick(e: MouseEvent) {
+      const { left, top, right, bottom } = node.getBoundingClientRect();
+
+      if (
+        e.clientX < left ||
+        e.clientX > right ||
+        e.clientY < top ||
+        e.clientY > bottom
+      ) {
+        onOutside();
+      }
+    }
+
+    node.addEventListener("click", handleClick);
+
+    return () => {
+      node.removeEventListener("click", handleClick);
+    };
+  };
 }

@@ -5,6 +5,7 @@
   import { setOfficeContext } from "./context.svelte";
   import EmployeeDialog from "./employee-dialog.svelte";
   import EmployeeRow from "./employee-row.svelte";
+  import AnimationWrapper from "$lib/components/animation-wrapper.svelte";
 
   let { data } = $props();
   const context = setOfficeContext(untrack(() => data.office));
@@ -37,9 +38,13 @@
   {:else if context.employees.length === 0}
     <p class="text-sm text-muted-foreground mx-auto mt-8">No employees yet.</p>
   {:else}
-    {#each context.employees as employee (employee.id)}
-      <EmployeeRow {employee} />
-    {/each}
+    <div>
+      {#each context.employees as employee (employee.id)}
+        <AnimationWrapper>
+          <EmployeeRow {employee} />
+        </AnimationWrapper>
+      {/each}
+    </div>
   {/if}
 </div>
 

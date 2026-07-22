@@ -3,6 +3,7 @@
   import { slide } from "svelte/transition";
   import { getAllOfficeContext } from "../../routes/offices/context.svelte";
   import { tick, untrack } from "svelte";
+  import { dialogClickedOutside } from "$lib/utils";
 
   let { open = $bindable(false) }: { open: boolean } = $props();
 
@@ -126,11 +127,9 @@
   onclose={resetValues}
   aria-labelledby="office-dialog-title"
   class="w-full max-w-sm rounded-b-xl pt-safe p-4 text-foreground backdrop:bg-black/50"
+  {@attach dialogClickedOutside(() => dialogEl.close())}
 >
-  <h2
-    id="office-dialog-title"
-    class="mb-4 text-lg font-semibold mt-2"
-  >
+  <h2 id="office-dialog-title" class="mb-4 text-lg font-semibold mt-2">
     {dialogTitleState}
   </h2>
 
