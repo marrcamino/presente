@@ -11,8 +11,12 @@
 
 <ModeWatcher defaultMode="system" />
 <Sidebar bind:open={appContext.sidebarOpen} />
+
 <div
-  style="padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);"
+  class="flex h-dvh flex-col overflow-hidden"
+  style="padding-top: env(safe-area-inset-top);"
 >
-  {@render children()}
+  <div class="min-h-0 flex-1 overflow-hidden">
+    {@render children()}
+  </div>
 </div>
