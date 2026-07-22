@@ -1,7 +1,17 @@
 <script lang="ts">
+  import PhotoCropDialog from "$lib/components/photo-crop-dialog.svelte";
   import { getDb } from "$lib/db";
-  import { getOfficeContext } from "./context.svelte";
+  import { resolvePhotoSrc } from "$lib/photo";
+  import { cleanupOrphanedPhotos } from "$lib/photo-cleanup";
   import { Camera } from "@lucide/svelte";
+  import {
+    BaseDirectory,
+    mkdir,
+    remove,
+    writeFile,
+  } from "@tauri-apps/plugin-fs";
+  import { untrack } from "svelte";
+  import { getOfficeContext } from "./context.svelte";
 
   const ctx = getOfficeContext();
 
@@ -11,26 +21,71 @@
   let error = $state("");
   let confirmingDelete = $state(false);
 
+  // Photo state
+  let photoPreviewUrl = $state<string | null>(null); // what's shown in the avatar circle
+  let pendingPhotoBlob = $state<Blob | null>(null); // freshly cropped, not yet written to disk
+  let cropDialogOpen = $state(false);
+  let cropSourceUrl = $state<string | null>(null); // object URL fed into the cropper
+  let fileInputEl: HTMLInputElement;
+
   const isEditing = $derived(ctx.openEmployee !== null);
 
-  $effect(() => {
-    if (ctx.showEmployeeDialog) {
-      name = ctx.openEmployee?.name ?? "";
-      error = "";
-      confirmingDelete = false;
-    }
-  });
+  function handleFileSelected(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = ""; // reset so picking the same file again still fires "change"
+    if (!file) return;
 
-  $effect(() => {
-    if (ctx.showEmployeeDialog) {
-      dialogEl?.showModal();
-    } else {
-      dialogEl?.close();
-    }
-  });
+    cropSourceUrl = URL.createObjectURL(file);
+    cropDialogOpen = true;
+  }
 
-  function handleClose() {
-    ctx.closeEmployeeDialog();
+  function handleCropped(blob: Blob) {
+    pendingPhotoBlob = blob;
+    if (photoPreviewUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(photoPreviewUrl);
+    }
+    photoPreviewUrl = URL.createObjectURL(blob);
+    cropDialogOpen = false;
+    if (cropSourceUrl) {
+      URL.revokeObjectURL(cropSourceUrl);
+      cropSourceUrl = null;
+    }
+  }
+
+  function handleCropCancel() {
+    cropDialogOpen = false;
+    if (cropSourceUrl) {
+      URL.revokeObjectURL(cropSourceUrl);
+      cropSourceUrl = null;
+    }
+  }
+
+  async function savePhoto(
+    employeeId: number,
+    blob: Blob,
+    previousPath: string | null,
+  ): Promise<string> {
+    await mkdir("employees", {
+      baseDir: BaseDirectory.AppData,
+      recursive: true,
+    });
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    // Unique filename per save so photo_path always changes on update —
+    // this is what makes row/dialog previews refresh instead of showing
+    // a stale cached image at the same URL.
+    const relativePath = `employees/${employeeId}-${Date.now()}.jpg`;
+    await writeFile(relativePath, bytes, { baseDir: BaseDirectory.AppData });
+
+    if (previousPath && previousPath !== relativePath) {
+      try {
+        await remove(previousPath, { baseDir: BaseDirectory.AppData });
+      } catch {
+        // old file may not exist; safe to ignore
+      }
+    }
+
+    return relativePath;
   }
 
   async function handleSubmit(e: Event) {
@@ -45,23 +100,47 @@
 
     try {
       const db = await getDb();
+      let photoPath = ctx.openEmployee?.photo_path ?? null;
 
       if (isEditing && ctx.openEmployee) {
-        await db.execute("UPDATE employees SET name = ? WHERE id = ?", [
-          name.trim(),
-          ctx.openEmployee.id,
-        ]);
-        ctx.updateEmployee({ ...ctx.openEmployee, name: name.trim() });
+        if (pendingPhotoBlob) {
+          photoPath = await savePhoto(
+            ctx.openEmployee.id,
+            pendingPhotoBlob,
+            ctx.openEmployee.photo_path,
+          );
+        }
+
+        await db.execute(
+          "UPDATE employees SET name = ?, photo_path = ? WHERE id = ?",
+          [name.trim(), photoPath, ctx.openEmployee.id],
+        );
+        ctx.updateEmployee({
+          ...ctx.openEmployee,
+          name: name.trim(),
+          photo_path: photoPath,
+        });
+        cleanupOrphanedPhotos();
       } else {
         const result = await db.execute(
           "INSERT INTO employees (office_id, name) VALUES (?, ?)",
           [ctx.office.id, name.trim()],
         );
+        const newId = result.lastInsertId!;
+
+        if (pendingPhotoBlob) {
+          photoPath = await savePhoto(newId, pendingPhotoBlob, null);
+          await db.execute("UPDATE employees SET photo_path = ? WHERE id = ?", [
+            photoPath,
+            newId,
+          ]);
+        }
+
         ctx.addEmployee({
-          id: result.lastInsertId!,
+          id: newId,
           office_id: ctx.office.id,
           name: name.trim(),
-          photo_path: null,
+          photo_path: photoPath,
           created_at: new Date().toISOString(),
         });
       }
@@ -86,8 +165,18 @@
       await db.execute("DELETE FROM employees WHERE id = ?", [
         ctx.openEmployee.id,
       ]);
+      if (ctx.openEmployee.photo_path) {
+        try {
+          await remove(ctx.openEmployee.photo_path, {
+            baseDir: BaseDirectory.AppData,
+          });
+        } catch {
+          // ignore if file already gone
+        }
+      }
       ctx.removeEmployee(ctx.openEmployee.id);
       ctx.closeEmployeeDialog();
+      cleanupOrphanedPhotos();
     } catch (err) {
       console.error(err);
       error = "Failed to delete employee.";
@@ -96,28 +185,74 @@
       submitting = false;
     }
   }
+
+  $effect(() => {
+    ctx.showEmployeeDialog;
+
+    untrack(() => {
+      if (!ctx.showEmployeeDialog) return;
+      name = ctx.openEmployee?.name ?? "";
+      error = "";
+      confirmingDelete = false;
+      pendingPhotoBlob = null;
+      cropSourceUrl = null;
+      cropDialogOpen = false;
+
+      const existingPath = ctx.openEmployee?.photo_path ?? null;
+      if (existingPath) {
+        resolvePhotoSrc(existingPath).then((src) => {
+          photoPreviewUrl = src;
+        });
+      } else {
+        photoPreviewUrl = null;
+      }
+    });
+  });
+
+  $effect(() => {
+    if (ctx.showEmployeeDialog) {
+      dialogEl?.showModal();
+    } else {
+      dialogEl?.close();
+    }
+  });
 </script>
 
 <dialog
   bind:this={dialogEl}
-  class="w-full max-w-sm rounded-lg border border-border p-4 text-foreground backdrop:bg-black/50"
+  class="w-full max-w-sm rounded-b-xl pt-safe p-4 text-foreground backdrop:bg-black/50"
 >
   <form onsubmit={handleSubmit} class="flex flex-col gap-3">
     <h2
-      class="text-lg font-semibold"
-      style="margin-top: env(safe-area-inset-top);"
+      class="text-lg font-semibold mt-2"
     >
       {isEditing ? "Edit Employee" : "Add Employee"}
     </h2>
 
-    <!-- Photo placeholder, no wiring yet -->
     <div class="flex justify-center">
       <button
         type="button"
+        onclick={() => fileInputEl?.click()}
         class="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-muted"
       >
-        <Camera size={24} class="text-muted-foreground" />
+        {#if photoPreviewUrl}
+          <img
+            src={photoPreviewUrl}
+            alt="Employee"
+            class="h-full w-full object-cover"
+          />
+        {:else}
+          <Camera size={24} class="text-muted-foreground" />
+        {/if}
       </button>
+
+      <input
+        bind:this={fileInputEl}
+        type="file"
+        accept="image/png,image/jpeg"
+        class="hidden"
+        onchange={handleFileSelected}
+      />
     </div>
 
     <label class="flex flex-col gap-1 text-sm">
@@ -174,7 +309,7 @@
 
         <button
           type="button"
-          onclick={handleClose}
+          onclick={() => ctx.closeEmployeeDialog()}
           disabled={submitting}
           class="ml-auto rounded-md border border-border px-3 py-2 text-sm"
         >
@@ -192,3 +327,11 @@
     {/if}
   </form>
 </dialog>
+
+{#if cropDialogOpen && cropSourceUrl}
+  <PhotoCropDialog
+    imageSrc={cropSourceUrl}
+    onCrop={handleCropped}
+    onCancel={handleCropCancel}
+  />
+{/if}

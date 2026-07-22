@@ -31,11 +31,11 @@
   </div>
 </Header>
 
-<div class="flex flex-col gap-2 p-4">
+<div class="flex flex-col gap-2 py-4 px-3.5">
   {#if context.employees === null}
-    <p class="text-sm text-muted-foreground">Loading...</p>
+    <p class="text-sm text-muted-foreground mx-auto mt-8">Loading...</p>
   {:else if context.employees.length === 0}
-    <p class="text-sm text-muted-foreground">No employees yet.</p>
+    <p class="text-sm text-muted-foreground mx-auto mt-8">No employees yet.</p>
   {:else}
     {#each context.employees as employee (employee.id)}
       <EmployeeRow {employee} />

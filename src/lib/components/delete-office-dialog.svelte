@@ -64,11 +64,10 @@
 <dialog
   bind:this={dialogEl}
   onclose={handleClose}
-  class="w-full max-w-sm rounded-lg p-6 backdrop:bg-background/30"
+  class="w-full max-w-sm rounded-b-xl pt-safe p-4 text-foreground backdrop:bg-black/50"
 >
   <h2
-    class="mb-2 text-lg font-semibold"
-    style="margin-top: env(safe-area-inset-top);"
+    class="mb-2 text-lg font-semibold mt-2"
   >
     Delete Office
   </h2>

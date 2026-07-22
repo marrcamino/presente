@@ -1,8 +1,21 @@
 <script lang="ts">
   import { getOfficeContext } from "./context.svelte";
+  import { resolvePhotoSrc } from "$lib/photo";
 
   let { employee }: { employee: Employee } = $props();
   const ctx = getOfficeContext();
+
+  let photoSrc = $state<string | null>(null);
+
+  $effect(() => {
+    if (employee.photo_path) {
+      resolvePhotoSrc(employee.photo_path).then((src) => {
+        photoSrc = src;
+      });
+    } else {
+      photoSrc = null;
+    }
+  });
 
   function openDialog() {
     ctx.openEmployee = employee;
@@ -16,9 +29,9 @@
   class="flex w-full items-center gap-3 rounded-md border border-border bg-card p-3 text-left transition-colors hover:bg-accent"
 >
   <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-muted">
-    {#if employee.photo_path}
+    {#if photoSrc}
       <img
-        src={employee.photo_path}
+        src={photoSrc}
         alt={employee.name}
         class="h-full w-full object-cover"
       />

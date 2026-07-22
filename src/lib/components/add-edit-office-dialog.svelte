@@ -125,12 +125,11 @@
   bind:this={dialogEl}
   onclose={resetValues}
   aria-labelledby="office-dialog-title"
-  class="w-full max-w-sm rounded-lg backdrop:bg-background/30 p-4 border"
+  class="w-full max-w-sm rounded-b-xl pt-safe p-4 text-foreground backdrop:bg-black/50"
 >
   <h2
     id="office-dialog-title"
-    class="mb-4 text-lg font-semibold"
-    style="margin-top: env(safe-area-inset-top);"
+    class="mb-4 text-lg font-semibold mt-2"
   >
     {dialogTitleState}
   </h2>
