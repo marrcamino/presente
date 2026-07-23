@@ -4,7 +4,7 @@
 </script>
 
 <button
-  class=" flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium"
+  class="w-full flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium"
   onclick={toggleMode}
 >
   <div class="size-4 relative inline-flex leading-7 -translate-y-0.5">

@@ -13,6 +13,13 @@ declare global {
     photo_path: string | null
     created_at: string
   }
+
+  interface AttendanceStatus {
+    id: number;
+    code: string;
+    label: string;
+    is_system: 0 | 1
+  }
 }
 
 export { };

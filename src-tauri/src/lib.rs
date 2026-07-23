@@ -24,7 +24,8 @@ fn get_migrations() -> Vec<Migration> {
             CREATE TABLE attendance_status (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 code TEXT NOT NULL UNIQUE,
-                label TEXT NOT NULL
+                label TEXT NOT NULL,
+                is_system INTEGER NOT NULL DEFAULT 0
             );
 
             CREATE TABLE attendance (
@@ -34,16 +35,12 @@ fn get_migrations() -> Vec<Migration> {
                 status_id INTEGER,
                 timestamp TEXT NOT NULL DEFAULT (datetime('now')),
                 FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
-                FOREIGN KEY (status_id) REFERENCES attendance_status(id) ON DELETE SET NULL
+                FOREIGN KEY (status_id) REFERENCES attendance_status(id) ON DELETE RESTRICT
             );
 
-            INSERT INTO attendance_status (code, label) VALUES
-                ('PRESENT', 'Present'),
-                ('ABSENT', 'Absent'),
-                ('OT', 'On Travel'),
-                ('OL', 'On Leave'),
-                ('TAS', 'TAS'),
-                ('OBA', 'OBA');
+            INSERT INTO attendance_status (code, label, is_system) VALUES
+                ('PRESENT', 'Present', 1),
+                ('ABSENT', 'Absent', 1);
         ",
         kind: MigrationKind::Up,
     }]
@@ -57,7 +54,8 @@ pub fn run() {
             tauri_plugin_sql::Builder::default()
                 .add_migrations("sqlite:presente.db", get_migrations())
                 .build(),
-        ).plugin(tauri_plugin_dialog::init())
+        )
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

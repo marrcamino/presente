@@ -1,13 +1,20 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { House, Building2 } from "@lucide/svelte";
+  import { House, Building2, Settings } from "@lucide/svelte";
   import ThemeSwitcher from "./theme-switcher.svelte";
+  import { cn } from "$lib/utils";
 
   let { open = $bindable(false) } = $props();
 
   const navItems = [
     { label: "Attendance", href: "/", icon: House },
     { label: "Offices", href: "/offices", icon: Building2 },
+    {
+      label: "Settings",
+      href: "/settings",
+      icon: Settings,
+      classNames: cn("mt-auto"),
+    },
   ];
 
   function close() {
@@ -42,13 +49,16 @@
       <span class="text-lg font-semibold">Presente</span>
     </div>
 
-    <nav class="flex flex-col p-2">
+    <nav class="flex flex-col p-2 h-full">
       {#each navItems as item}
         <a
           href={item.href}
           onclick={close}
-          class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium
-						{isActive(item.href) ? 'bg-primary' : ''}"
+          class={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium",
+            isActive(item.href) ? "bg-primary" : "",
+            item.classNames,
+          )}
         >
           <item.icon size={20} />
           {item.label}
