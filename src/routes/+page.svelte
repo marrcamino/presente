@@ -1,9 +1,22 @@
 <script lang="ts">
   import Header from "$lib/components/header.svelte";
+  import AlphabetIndexScroller from "$lib/alphabet-index-scroller.svelte";
   import { SaveAll } from "@lucide/svelte";
   import { setRootContext } from "./context.svelte";
+  import { mockEmployees, groupEmployeesByName } from "$lib/mock-employees";
 
   const context = setRootContext();
+  const groups = groupEmployeesByName(mockEmployees);
+  const letters = groups.map((g) => g.letter);
+
+  const sectionRefs: Record<string, HTMLElement> = {};
+
+  function scrollToLetter(letter: string) {
+    sectionRefs[letter]?.scrollIntoView({
+      behavior: "instant",
+      block: "start",
+    });
+  }
 </script>
 
 <div class="flex h-full flex-col">
@@ -18,8 +31,29 @@
     </button>
   </Header>
 
-  <div class="flex-1 overflow-y-auto p-4">
-    <!-- Content here -->
+  <div class="relative flex-1 overflow-hidden">
+    <div class="h-full overflow-y-auto p-4 pr-8">
+      {#each groups as group (group.letter)}
+        <div bind:this={sectionRefs[group.letter]} class="scroll-mt-2">
+          <div class="flex flex-col gap-2 mb-2">
+            {#each group.employees as employee (employee.id)}
+              <div
+                class="flex items-center gap-3 rounded-xl border border-border p-3"
+              >
+                <div
+                  class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-medium"
+                >
+                  {employee.name.charAt(0)}
+                </div>
+                <span class="text-sm">{employee.name}</span>
+              </div>
+            {/each}
+          </div>
+        </div>
+      {/each}
+    </div>
+
+    <AlphabetIndexScroller {letters} onselect={scrollToLetter} />
   </div>
 
   <div
